@@ -1,4 +1,4 @@
-Quick setup:\n
+Quick setup:
 
 download requirements.txt
 
