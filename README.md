@@ -2,7 +2,6 @@ Quick setup:\n
 
 download requirements.txt
 
-run in command prompt
-
+do
 ```pip install -r requirements.txt```
 
