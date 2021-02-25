@@ -1,7 +1,5 @@
 Quick setup:
 
-download requirements.txt
-
-do
+download and do
 ```pip install -r requirements.txt```
 
