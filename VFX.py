@@ -95,8 +95,7 @@ while True:
         canny = not canny
     elif k == ord('h'):
         hide = not hide
-    else:
-        continue
+
 
 cap.release()
 cv2.destroyAllWindows()
