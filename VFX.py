@@ -1,4 +1,4 @@
-#!py -3.9
+#!./venv/Scripts/python.exe
 import cv2, random
 import numpy as np
 
@@ -13,22 +13,36 @@ blur = False
 flipwithface = False
 canny = False
 hide = False
+clearblur = False
+pencilSketch = False
+lag = False
 choices = [cv2.COLOR_RGB2HSV, cv2.COLOR_RGB2BGR, cv2.COLOR_RGB2HLS, cv2.COLOR_RGB2LAB]
+multi = 10
 
 
 while True:
     ret, frame = cap.read()
     img = frame.copy()
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.3,5)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
     if state != None:
         img = cv2.cvtColor(img, state)
-        
+    
+    if pencilSketch:
+        invimg = 255 - gray
+        gauss = cv2.GaussianBlur(invimg, (21, 21), 0)
+        invgauss = 255 - gauss
+        img = cv2.divide(gray, invgauss, scale=256.0)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+
+
     if blur:
         img = cv2.blur(img, (10, 10))
 
     if flipwithface:
         img = np.array(img[::-1,::-1,:])
+    
+
 
 
     
@@ -39,7 +53,7 @@ while True:
 
         if hide:
             region = np.zeros(img[y:y+h, x:x+w].shape)
-            region[:] = [0, 255, 100]
+            region[:] = [235, 12, 108]
             img[y:y+h, x:x+w] = region
         if box:
             cv2.rectangle(img, (x,y), (x+w, y+h), (0, 0, 255), 2)
@@ -50,11 +64,19 @@ while True:
         if flipdisplay:
             img = np.array(img[::-1,::-1,:])
 
+
+    if clearblur:
+        img = cv2.medianBlur(img, 15)
+
     if canny:
         img = cv2.Canny(img, 100, 200)
 
 
-
+    if lag:
+        sh = img.shape
+        if sh[0] > multi and sh[1] > multi:
+            img = cv2.resize(img, (sh[0] // multi, sh[1] // multi))
+            img = cv2.resize(img, (sh[0], sh[1]))
 
 
 
@@ -63,10 +85,10 @@ while True:
     k = cv2.waitKey(1)
     if k == 27:
         break
-    elif k == ord("1"):
-        box = not box
     elif k == ord("2"):
-        state = random.choice(choices)
+        box = not box
+    elif k == ord("1"):
+        pencilSketch = not pencilSketch
     elif k == ord("3"):
         state = cv2.COLOR_RGB2HSV
     elif k == ord("4"):
@@ -89,15 +111,21 @@ while True:
         flipwithface = False
         canny = False
         hide = False
+        clearblur = False
+        lag = False
+        pencilSketch = False
     elif k == ord("f"):
         flipwithface = not flipwithface
     elif k == ord('a'):
         canny = not canny
     elif k == ord('h'):
         hide = not hide
+    elif k == ord('l'):
+        lag = not lag
+    elif k == ord('m'):
+        clearblur = not clearblur
     else:
         continue
-
 
 cap.release()
 cv2.destroyAllWindows()
