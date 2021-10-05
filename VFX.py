@@ -1,7 +1,7 @@
 #!./venv/Scripts/python.exe
 import cv2, random
 import numpy as np
-
+from skimage.util import random_noise
 face_cascade = cv2.CascadeClassifier("data\\haarcascade_frontalface_default.xml")
 eye_cascade = cv2.CascadeClassifier("data\\haarcascade_eye.xml")
 cap = cv2.VideoCapture(0)
@@ -17,7 +17,15 @@ clearblur = False
 pencilSketch = False
 lag = False
 choices = [cv2.COLOR_RGB2HSV, cv2.COLOR_RGB2BGR, cv2.COLOR_RGB2HLS, cv2.COLOR_RGB2LAB]
-multi = 10
+multi = 20
+noise = False
+objnoise = True
+varamt = 0.015
+def generateNoise(img):
+    noise_img = random_noise(img, mode='gaussian', clip=objnoise, var=varamt)
+    noise_img = np.array(255*noise_img, dtype = 'uint8')
+    return noise_img
+
 
 
 while True:
@@ -71,13 +79,15 @@ while True:
     if canny:
         img = cv2.Canny(img, 100, 200)
 
-
+    if noise:
+        img = generateNoise(img)
     if lag:
         sh = img.shape
         if sh[0] > multi and sh[1] > multi:
             img = cv2.resize(img, (sh[0] // multi, sh[1] // multi))
             img = cv2.resize(img, (sh[0], sh[1]))
-
+    if noise:
+        img = generateNoise(img)
 
 
     cv2.namedWindow('SFX', cv2.WINDOW_FREERATIO)
@@ -85,9 +95,9 @@ while True:
     k = cv2.waitKey(1)
     if k == 27:
         break
-    elif k == ord("2"):
-        box = not box
     elif k == ord("1"):
+        box = not box
+    elif k == ord("2"):
         pencilSketch = not pencilSketch
     elif k == ord("3"):
         state = cv2.COLOR_RGB2HSV
@@ -113,7 +123,9 @@ while True:
         hide = False
         clearblur = False
         lag = False
+        noise = False
         pencilSketch = False
+        objnoise = not objnoise
     elif k == ord("f"):
         flipwithface = not flipwithface
     elif k == ord('a'):
@@ -124,6 +136,20 @@ while True:
         lag = not lag
     elif k == ord('m'):
         clearblur = not clearblur
+    elif k == ord('n'):
+        noise = not noise
+    elif k == ord('i'):
+        objnoise = not objnoise
+    elif k == ord('k'):
+        if varamt > 0.01:
+            varamt -= 0.01
+    elif k == ord('o'):
+        varamt += 0.01
+    elif k == ord('u'):
+        if multi > 1:
+            multi -= 1
+    elif k == ord('j'):
+        multi += 1
     else:
         continue
 
