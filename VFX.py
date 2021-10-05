@@ -150,8 +150,7 @@ while True:
             multi -= 1
     elif k == ord('j'):
         multi += 1
-    else:
-        continue
+
 
 cap.release()
 cv2.destroyAllWindows()
