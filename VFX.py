@@ -126,6 +126,8 @@ while True:
         noise = False
         pencilSketch = False
         objnoise = not objnoise
+        varamt = 0.015
+        multi = 20
     elif k == ord("f"):
         flipwithface = not flipwithface
     elif k == ord('a'):
