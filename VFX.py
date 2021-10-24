@@ -16,6 +16,10 @@ hide = False
 clearblur = False
 pencilSketch = False
 lag = False
+imgoverride = False
+invis = False
+srcimg = cv2.imread("./srcimg.png", cv2.IMREAD_UNCHANGED)
+srcimg = cv2.cvtColor(srcimg, cv2.COLOR_RGB2RGBA)
 choices = [cv2.COLOR_RGB2HSV, cv2.COLOR_RGB2BGR, cv2.COLOR_RGB2HLS, cv2.COLOR_RGB2LAB]
 multi = 20
 noise = False
@@ -26,8 +30,19 @@ def generateNoise(img):
     noise_img = np.array(255*noise_img, dtype = 'uint8')
     return noise_img
 
+def overlay_tp(img, ol):
+    aimg = img[:, :, 3] / 255.0
+    aol = ol[:, :, 3] / 255.0
 
+    for color in range(0, 3):
+        img[:, :, color] = aol * ol[:, :, color] + aimg * img[:, :, color] * (1 - aol)
 
+    # set adjusted alpha and denormalize back to 0-255
+    img[:, :, 3] = (1 - (1 - aol) * (1 - aimg)) * 255
+    return img
+
+ret, frame = cap.read()
+backimg = frame
 while True:
     ret, frame = cap.read()
     img = frame.copy()
@@ -35,59 +50,70 @@ while True:
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
     if state != None:
         img = cv2.cvtColor(img, state)
-    
-    if pencilSketch:
-        invimg = 255 - gray
-        gauss = cv2.GaussianBlur(invimg, (21, 21), 0)
-        invgauss = 255 - gauss
-        img = cv2.divide(gray, invgauss, scale=256.0)
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    if invis:
+        img = backimg
+    else:
+        if pencilSketch:
+            invimg = 255 - gray
+            gauss = cv2.GaussianBlur(invimg, (21, 21), 0)
+            invgauss = 255 - gauss
+            img = cv2.divide(gray, invgauss, scale=256.0)
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
 
 
-    if blur:
-        img = cv2.blur(img, (10, 10))
+        if blur:
+            img = cv2.blur(img, (10, 10))
 
-    if flipwithface:
-        img = np.array(img[::-1,::-1,:])
-    
-
-
-
-    
-    for (x,y,w,h) in faces:
-        roi_gray = gray[y:y+h, x:x+w]
-        roi_color = frame[y:y+h, x:x+w]
-        eyes = eye_cascade.detectMultiScale(roi_gray, 1.3, 2)
-
-        if hide:
-            region = np.zeros(img[y:y+h, x:x+w].shape)
-            region[:] = [235, 12, 108]
-            img[y:y+h, x:x+w] = region
-        if box:
-            cv2.rectangle(img, (x,y), (x+w, y+h), (0, 0, 255), 2)
-            for (ex, ey, ew, eh) in eyes:
-                cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
-            img[y: y + h, x: x + w, :] = roi_color
-
-        if flipdisplay:
+        if flipwithface:
             img = np.array(img[::-1,::-1,:])
 
 
-    if clearblur:
-        img = cv2.medianBlur(img, 15)
 
-    if canny:
-        img = cv2.Canny(img, 100, 200)
 
-    if noise:
-        img = generateNoise(img)
-    if lag:
-        sh = img.shape
-        if sh[0] > multi and sh[1] > multi:
-            img = cv2.resize(img, (sh[0] // multi, sh[1] // multi))
-            img = cv2.resize(img, (sh[0], sh[1]))
-    if noise:
-        img = generateNoise(img)
+
+        for (x,y,w,h) in faces:
+            roi_gray = gray[y:y+h, x:x+w]
+            roi_color = frame[y:y+h, x:x+w]
+            eyes = eye_cascade.detectMultiScale(roi_gray, 1.3, 2)
+            if imgoverride:
+                nimg = cv2.resize(srcimg, roi_color.shape[0:2])
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
+                print(srcimg.shape, img.shape)
+                nroi = overlay_tp(img[y: y + h, x: x + w, :], nimg)
+                img[y: y + h, x: x + w, :] = nroi
+                cv2.imwrite('outtest.png', img)
+
+            if hide:
+                region = np.zeros(img[y:y+h, x:x+w].shape)
+                region[:] = [235, 12, 108]
+                img[y:y+h, x:x+w] = region
+            if box:
+                cv2.rectangle(img, (x,y), (x+w, y+h), (0, 0, 255), 2)
+                for (ex, ey, ew, eh) in eyes:
+                    cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
+                img[y: y + h, x: x + w, 0:3] = roi_color
+
+
+            if flipdisplay:
+                img = np.array(img[::-1,::-1,:])
+
+
+        if clearblur:
+            img = cv2.medianBlur(img, 15)
+
+        if canny:
+            img = cv2.Canny(img, 100, 200)
+
+        if noise:
+            img = generateNoise(img)
+        if lag:
+            sh = img.shape
+            if sh[0] > multi and sh[1] > multi:
+                img = cv2.resize(img, (sh[0] // multi, sh[1] // multi))
+                img = cv2.resize(img, (sh[0], sh[1]))
+        if noise:
+            img = generateNoise(img)
+
 
 
     cv2.namedWindow('SFX', cv2.WINDOW_FREERATIO)
@@ -128,6 +154,8 @@ while True:
         objnoise = not objnoise
         varamt = 0.015
         multi = 20
+        imgoverride = False
+        invis = False
     elif k == ord("f"):
         flipwithface = not flipwithface
     elif k == ord('a'):
@@ -152,6 +180,12 @@ while True:
             multi -= 1
     elif k == ord('j'):
         multi += 1
+    elif k == ord('b'):
+        imgoverride = not imgoverride
+    elif k == ord('v'):
+        invis = not invis
+    if k == ord("x"):
+        backimg = img
 
 
 cap.release()
