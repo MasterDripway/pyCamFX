@@ -1,0 +1,7 @@
+imageio==2.20.0
+numpy==1.23.1
+opencv-python==4.6.0.66
+packaging==21.3
+Pillow==9.2.0
+scikit-image==0.19.3
+scipy==1.8.1
