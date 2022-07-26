@@ -77,11 +77,10 @@ while True:
             eyes = eye_cascade.detectMultiScale(roi_gray, 2, 5)
             if imgoverride:
                 nimg = cv2.resize(srcimg, roi_color.shape[0:2])
-                img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
-                print(srcimg.shape, img.shape)
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)            
                 nroi = overlay_tp(img[y: y + h, x: x + w, :], nimg)
                 img[y: y + h, x: x + w, :] = nroi
-                cv2.imwrite('outtest.png', img)
+              
 
             if hide:
                 region = np.zeros(img[y:y+h, x:x+w].shape)
