@@ -2,8 +2,8 @@
 import cv2, random
 import numpy as np
 from skimage.util import random_noise
-face_cascade = cv2.CascadeClassifier("data\\haarcascade_frontalface_default.xml")
-eye_cascade = cv2.CascadeClassifier("data\\haarcascade_eye.xml")
+face_cascade = cv2.CascadeClassifier("./data/haarcascade_frontalface_default.xml")
+eye_cascade = cv2.CascadeClassifier("./data/haarcascade_eye.xml")
 cap = cv2.VideoCapture(0)
 box = False
 tts = False
@@ -74,7 +74,7 @@ while True:
         for (x,y,w,h) in faces:
             roi_gray = gray[y:y+h, x:x+w]
             roi_color = frame[y:y+h, x:x+w]
-            eyes = eye_cascade.detectMultiScale(roi_gray, 1.3, 2)
+            eyes = eye_cascade.detectMultiScale(roi_gray, 2, 5)
             if imgoverride:
                 nimg = cv2.resize(srcimg, roi_color.shape[0:2])
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
