@@ -32,3 +32,5 @@ k - decreases noise amount
 u - increases feed quality division factor
 
 j - decreases feed quality division factor
+
+b - overrides with `srcimg`
